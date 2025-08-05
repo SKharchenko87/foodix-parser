@@ -1,0 +1,7 @@
+# IDE: GoLand / IntelliJ IDEA
+.idea/
+*.iml
+
+# Конфиги
+configs/config.yaml
+
