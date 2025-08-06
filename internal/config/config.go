@@ -20,12 +20,12 @@ type Log struct {
 func LoadConfig(filePath string) (Config, error) {
 	data, err := os.ReadFile(filePath)
 	if err != nil {
-		return Config{}, fmt.Errorf("Error reading config file", filePath, err)
+		return Config{}, fmt.Errorf("Error reading config file %s %v", filePath, err)
 	}
 	var cfg Config
 	err = yaml.Unmarshal(data, &cfg)
 	if err != nil {
-		return Config{}, fmt.Errorf("Error parsing config file", filePath, err)
+		return Config{}, fmt.Errorf("Error parsing config file %s %v", filePath, err)
 	}
 
 	return cfg, nil
