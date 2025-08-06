@@ -1,0 +1,5 @@
+source: "test.ru/food"
+
+log:
+  level: "info"
+  format: "json"
