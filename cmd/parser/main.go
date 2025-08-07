@@ -14,7 +14,6 @@ type Flags struct {
 }
 
 func main() {
-
 	// Аргументы запуска
 	flags := initFlags()
 
@@ -31,7 +30,7 @@ func main() {
 	slog.SetDefault(logger)
 	logger.Info("Starting app")
 
-	//ToDo
+	// ToDo
 	println(cfg.Source)
 }
 
@@ -43,7 +42,6 @@ func initFlags() Flags {
 }
 
 func initLogger(cfg config.Config) *slog.Logger {
-
 	levelMap := map[string]slog.Level{
 		"debug": slog.LevelDebug,
 		"info":  slog.LevelInfo,

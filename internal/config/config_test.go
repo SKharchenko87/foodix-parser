@@ -15,7 +15,11 @@ func TestLoadConfig1(t *testing.T) {
 		want    Config
 		wantErr bool
 	}{
-		{name: "TestLoadConfig1", args: args{"../../configs/config.example.yaml"}, want: Config{Source: "test.ru/food", Log: Log{Level: "info", Format: "json"}}},
+		{
+			name: "TestLoadConfig1",
+			args: args{"../../configs/config.example.yaml"},
+			want: Config{Source: "test.ru/food", Log: Log{Level: "info", Format: "json"}},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
