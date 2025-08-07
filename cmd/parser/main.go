@@ -2,10 +2,11 @@ package main
 
 import (
 	"flag"
-	"github.com/SKharchenko87/foodix-parser/internal/config"
 	"log/slog"
 	"os"
 	"strings"
+
+	"github.com/SKharchenko87/foodix-parser/internal/config"
 )
 
 type Flags struct {
@@ -13,6 +14,7 @@ type Flags struct {
 }
 
 func main() {
+
 	// Аргументы запуска
 	flags := initFlags()
 
@@ -24,7 +26,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Логер
+	// Logger
 	logger := initLogger(cfg)
 	slog.SetDefault(logger)
 	logger.Info("Starting app")
