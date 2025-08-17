@@ -1,5 +1,9 @@
-source: "test.ru/food"
-
 log:
   level: "info"
   format: "json"
+
+sources:
+  - name: test.ru
+    url: "test.ru/food"
+    timeout: 10000
+    product_per_page: 80

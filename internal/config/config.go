@@ -7,9 +7,16 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type SourceConfig struct {
+	Name           string `yaml:"name"`
+	URL            string `yaml:"url"`
+	Timeout        int    `yaml:"timeout"`
+	ProductPerPage int    `yaml:"product_per_page"`
+}
+
 type Config struct {
-	Source string `yaml:"source"`
-	Log    Log    `yaml:"log"`
+	Log     Log            `yaml:"log"`
+	Sources []SourceConfig `yaml:"sources"`
 	// ToDo
 }
 

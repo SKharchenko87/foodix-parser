@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestLoadConfig1(t *testing.T) {
+func TestLoadConfig(t *testing.T) {
 	type args struct {
 		filePath string
 	}
@@ -18,7 +18,10 @@ func TestLoadConfig1(t *testing.T) {
 		{
 			name: "TestLoadConfig1",
 			args: args{"../../configs/config.example.yaml"},
-			want: Config{Source: "test.ru/food", Log: Log{Level: "info", Format: "json"}},
+			want: Config{
+				Log:     Log{Level: "info", Format: "json"},
+				Sources: []SourceConfig{{Name: "test.ru", URL: "test.ru/food", Timeout: 10000, ProductPerPage: 80}},
+			},
 		},
 	}
 	for _, tt := range tests {
