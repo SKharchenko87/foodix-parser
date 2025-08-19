@@ -20,6 +20,11 @@ type Config struct {
 	// ToDo
 }
 
+type DB struct {
+	DSN       string
+	BatchSize int
+}
+
 type Log struct {
 	Level  string `yaml:"level,omitempty"`
 	Format string `yaml:"format,omitempty"`
