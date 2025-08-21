@@ -35,7 +35,6 @@ func (c Calorizator) Parse() (res []models.Product, err error) {
 		defer wg.Done()
 		for product := range chanProduct {
 			res = append(res, product)
-			fmt.Println(product) // ToDo
 		}
 	}()
 
@@ -58,8 +57,8 @@ func (c Calorizator) Parse() (res []models.Product, err error) {
 
 	_ = pageCount // ToDo переделать цикл после отладки
 	// Обрабатываем оставшиеся страницы
-	for i := 1; i < 2; i++ {
-		time.Sleep(2 * time.Second)
+	for i := 1; i < pageCount; i++ {
+		time.Sleep(2 * time.Second) // Что бы не заблокировали
 		doc, err = c.fetchPage(c.cfg.URL + "?page=" + strconv.Itoa(i))
 		if err != nil {
 			return nil, fmt.Errorf("could not fetch page index=%d: %w", i, err)
@@ -72,7 +71,7 @@ func (c Calorizator) Parse() (res []models.Product, err error) {
 	close(chanProduct)
 
 	wg.Wait()
-	return
+	return res, nil
 }
 
 func (c Calorizator) fetchPage(url string) (doc *goquery.Document, err error) {
