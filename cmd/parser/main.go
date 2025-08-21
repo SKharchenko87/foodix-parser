@@ -2,11 +2,15 @@ package main
 
 import (
 	"flag"
+	"log"
 	"log/slog"
 	"os"
 	"strings"
 
 	"github.com/SKharchenko87/foodix-parser/internal/config"
+	"github.com/SKharchenko87/foodix-parser/internal/models"
+	"github.com/SKharchenko87/foodix-parser/internal/parser"
+	"github.com/SKharchenko87/foodix-parser/internal/storage"
 )
 
 type Flags struct {
@@ -30,8 +34,7 @@ func main() {
 	slog.SetDefault(logger)
 	logger.Info("Starting app")
 
-	// ToDo
-	println(cfg.Source)
+	run(cfg)
 }
 
 func initFlags() Flags {
@@ -67,4 +70,35 @@ func initLogger(cfg config.Config) *slog.Logger {
 	}
 
 	return slog.New(handler)
+}
+
+func run(cfg config.Config) {
+	var data []models.Product
+	for _, source := range cfg.Sources {
+		if source.Name == "calorizator" {
+			pars := parser.NewCalorizator(source)
+			var err error
+			data, err = pars.Parse()
+			if err != nil {
+				log.Fatal(err)
+				return
+			}
+		}
+
+		var store storage.DB
+		var err error
+		if cfg.Store.Name == "postgres" {
+			store, err = storage.NewPostgres(cfg.Store)
+			if err != nil {
+				log.Fatal(err)
+				return
+			}
+		}
+
+		err = store.InsertProducts(data)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+	}
 }
