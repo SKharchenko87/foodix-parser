@@ -3,7 +3,12 @@ log:
   format: "json"
 
 sources:
-  - name: test.ru
+  - name: "test.ru"
     url: "test.ru/food"
     timeout: 10000
     product_per_page: 80
+
+db:
+  name: "postgres"
+  dsn: "postgres://postgres:@localhost:5432/postgres?sslmode=disable"
+  batch_size: 1000
