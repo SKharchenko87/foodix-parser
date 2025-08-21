@@ -3,10 +3,12 @@ package storage
 import (
 	"database/sql"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/SKharchenko87/foodix-parser/internal/config"
 	"github.com/SKharchenko87/foodix-parser/internal/models"
+	_ "github.com/lib/pq" // postgres driver
 )
 
 type Postgres struct {
@@ -14,12 +16,16 @@ type Postgres struct {
 	cfg config.DB
 }
 
-func NewPostgres(cfg config.DB) (*Postgres, error) {
+func NewPostgres(cfg config.DB) (DB, error) {
+	os.Unsetenv("PGLOCALEDIR")
 	db, err := sql.Open("postgres", cfg.DSN)
 	if err != nil {
 		return nil, err
 	}
-	return &Postgres{db: db, cfg: cfg}, nil
+	res := new(Postgres)
+	res.db = db
+	res.cfg = cfg
+	return res, nil
 }
 
 func (p *Postgres) Close() error {
@@ -50,6 +56,11 @@ func (p *Postgres) InsertProducts(products []models.Product) (err error) {
 	defer func(tx *sql.Tx) {
 		_ = tx.Rollback() // rollback после commit безопасен
 	}(tx)
+
+	_, err = tx.Exec("TRUNCATE TABLE public.product")
+	if err != nil {
+		return fmt.Errorf("truncate products: %w", err)
+	}
 
 	for batchIndex := 0; batchIndex < numBatches; batchIndex++ {
 		curBatchSize := min(p.cfg.BatchSize, numProducts-batchIndex*p.cfg.BatchSize)
