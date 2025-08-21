@@ -55,7 +55,6 @@ func (c Calorizator) Parse() (res []models.Product, err error) {
 		return nil, fmt.Errorf("could not parse products: %w", err)
 	}
 
-	_ = pageCount // ToDo переделать цикл после отладки
 	// Обрабатываем оставшиеся страницы
 	for i := 1; i < pageCount; i++ {
 		time.Sleep(2 * time.Second) // Что бы не заблокировали
