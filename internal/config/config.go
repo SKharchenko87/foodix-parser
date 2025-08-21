@@ -17,12 +17,13 @@ type SourceConfig struct {
 type Config struct {
 	Log     Log            `yaml:"log"`
 	Sources []SourceConfig `yaml:"sources"`
-	// ToDo
+	Store   DB             `yaml:"db"`
 }
 
 type DB struct {
-	DSN       string
-	BatchSize int
+	Name      string `yaml:"name"`
+	DSN       string `yaml:"dsn"`
+	BatchSize int    `yaml:"batch_size"`
 }
 
 type Log struct {
