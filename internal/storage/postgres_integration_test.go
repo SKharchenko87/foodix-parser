@@ -7,17 +7,13 @@ import (
 
 	"github.com/SKharchenko87/foodix-parser/internal/config"
 	"github.com/SKharchenko87/foodix-parser/internal/models"
-	//_ "github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/lib/pq" // postgres driver
 )
 
 func setupTestDB(t *testing.T) *sql.DB {
-	//dsn := os.Getenv("DATABASE_URL")
-	//dsn := "host=localhost port=5432 user=postgres password=secret dbname=postgres sslmode=disable"
 	os.Unsetenv("PGLOCALEDIR")
 	dsn := "postgres://postgres:@localhost:5432/postgres?sslmode=disable"
 	db, err := sql.Open("postgres", dsn)
-	//db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		t.Fatalf("failed to connect to test DB: %v", err)
 	}
@@ -62,6 +58,7 @@ func TestInsertProduct(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to query product: %v", err)
 	}
+	defer rows.Close()
 	for rows.Next() {
 		var got models.Product
 		if err := rows.Scan(&got.Name, &got.Protein, &got.Fat, &got.Carbohydrate, &got.Kcal); err != nil {
@@ -71,5 +68,40 @@ func TestInsertProduct(t *testing.T) {
 			t.Errorf("InsertProduct() = %v, want %v", got, product)
 		}
 	}
+}
 
+func TestInsertProducts(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+	p := &Postgres{db: db, cfg: config.DB{BatchSize: 10}}
+	product0 := models.Product{
+		Name:         "Product Name",
+		Protein:      2.0,
+		Fat:          1.3,
+		Carbohydrate: 1.4,
+		Kcal:         150.0,
+	}
+
+	product1 := models.Product{
+		Name:         "Второй продукт",
+		Protein:      1.0,
+		Fat:          3.3,
+		Carbohydrate: 4.4,
+		Kcal:         250.0,
+	}
+
+	products := []models.Product{product0, product1}
+	err := p.InsertProducts(products)
+	if err != nil {
+		t.Fatalf("failed to insert products: %v", err)
+	}
+
+	row := db.QueryRow("SELECT count(*) FROM product")
+	var count int
+	if err := row.Scan(&count); err != nil {
+		t.Fatalf("failed to scan products: %v", err)
+	}
+	if count != len(products) {
+		t.Errorf("InsertProducts() = %v, want %v", count, len(products))
+	}
 }
