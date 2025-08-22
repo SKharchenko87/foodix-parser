@@ -1,9 +1,19 @@
 package parser
 
 import (
+	"errors"
+
+	"github.com/SKharchenko87/foodix-parser/internal/config"
 	"github.com/SKharchenko87/foodix-parser/internal/models"
 )
 
 type Parser interface {
 	Parse() ([]models.Product, error)
+}
+
+func NewParser(cfg config.SourceConfig) (Parser, error) {
+	if cfg.Name == "calorizator" {
+		return NewCalorizator(cfg), nil
+	}
+	return nil, errors.New("no parser found")
 }

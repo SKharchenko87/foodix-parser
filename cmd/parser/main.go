@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/SKharchenko87/foodix-parser/internal/config"
-	"github.com/SKharchenko87/foodix-parser/internal/models"
 	"github.com/SKharchenko87/foodix-parser/internal/parser"
 	"github.com/SKharchenko87/foodix-parser/internal/storage"
 )
@@ -34,7 +33,18 @@ func main() {
 	slog.SetDefault(logger)
 	logger.Info("Starting app")
 
-	run(cfg)
+	// Список источников
+	sources, err := initSources(cfg.Sources)
+	if err != nil {
+		bootstrapLogger.Error("failed to initialize sources", "error", err)
+	}
+
+	// Хранилище данных
+	store, err := storage.NewStore(cfg.Store)
+	if err != nil {
+		bootstrapLogger.Error("failed to initialize store", "error", err)
+	}
+	run(sources, store)
 }
 
 func initFlags() Flags {
@@ -72,27 +82,24 @@ func initLogger(cfg config.Config) *slog.Logger {
 	return slog.New(handler)
 }
 
-func run(cfg config.Config) {
-	var data []models.Product
-	for _, source := range cfg.Sources {
-		if source.Name == "calorizator" {
-			pars := parser.NewCalorizator(source)
-			var err error
-			data, err = pars.Parse()
-			if err != nil {
-				log.Fatal(err)
-				return
-			}
+func initSources(cfgSources []config.SourceConfig) ([]parser.Parser, error) {
+	result := make([]parser.Parser, 0, len(cfgSources))
+	for _, source := range cfgSources {
+		pars, err := parser.NewParser(source)
+		if err != nil {
+			return nil, err
 		}
+		result = append(result, pars)
+	}
+	return result, nil
+}
 
-		var store storage.DB
-		var err error
-		if cfg.Store.Name == "postgres" {
-			store, err = storage.NewPostgres(cfg.Store)
-			if err != nil {
-				log.Fatal(err)
-				return
-			}
+func run(sources []parser.Parser, store storage.DB) {
+	for _, source := range sources {
+		data, err := source.Parse()
+		if err != nil {
+			log.Fatal(err)
+			return
 		}
 
 		err = store.InsertProducts(data)
