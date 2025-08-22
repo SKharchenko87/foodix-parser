@@ -12,6 +12,7 @@ type SourceConfig struct {
 	URL            string `yaml:"url"`
 	Timeout        int    `yaml:"timeout"`
 	ProductPerPage int    `yaml:"product_per_page"`
+	RequestDelay   int    `yaml:"request_delay"`
 }
 
 type Config struct {

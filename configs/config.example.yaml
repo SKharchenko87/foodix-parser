@@ -7,6 +7,7 @@ sources:
     url: "test.ru/food"
     timeout: 10000
     product_per_page: 80
+    request_delay: 2000
 
 db:
   name: "postgres"

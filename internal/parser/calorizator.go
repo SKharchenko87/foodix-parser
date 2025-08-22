@@ -57,7 +57,7 @@ func (c Calorizator) Parse() (res []models.Product, err error) {
 
 	// Обрабатываем оставшиеся страницы
 	for i := 1; i < pageCount; i++ {
-		time.Sleep(2 * time.Second) // Что бы не заблокировали
+		time.Sleep(time.Duration(c.cfg.RequestDelay) * time.Millisecond) // Что бы не заблокировали
 		doc, err = c.fetchPage(c.cfg.URL + "?page=" + strconv.Itoa(i))
 		if err != nil {
 			return nil, fmt.Errorf("could not fetch page index=%d: %w", i, err)
