@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"log"
+	"fmt"
 	"log/slog"
 	"os"
 	"strings"
@@ -36,15 +36,23 @@ func main() {
 	// Список источников
 	sources, err := initSources(cfg.Sources)
 	if err != nil {
-		bootstrapLogger.Error("failed to initialize sources", "error", err)
+		logger.Error("failed to initialize sources", "error", err)
+		os.Exit(1)
 	}
 
 	// Хранилище данных
 	store, err := storage.NewStore(cfg.Store)
 	if err != nil {
-		bootstrapLogger.Error("failed to initialize store", "error", err)
+		logger.Error("failed to initialize store", "error", err)
+		os.Exit(1)
 	}
-	run(sources, store)
+
+	// Парсим и записываем
+	err = run(sources, store)
+	if err != nil {
+		logger.Error("failed to run", "error", err)
+		os.Exit(1)
+	}
 }
 
 func initFlags() Flags {
@@ -94,18 +102,17 @@ func initSources(cfgSources []config.SourceConfig) ([]parser.Parser, error) {
 	return result, nil
 }
 
-func run(sources []parser.Parser, store storage.DB) {
+func run(sources []parser.Parser, store storage.DB) error {
 	for _, source := range sources {
 		data, err := source.Parse()
 		if err != nil {
-			log.Fatal(err)
-			return
+			return fmt.Errorf("failed parsing source %s: %w", source.GetName(), err)
 		}
 
 		err = store.InsertProducts(data)
 		if err != nil {
-			log.Fatal(err)
-			return
+			return fmt.Errorf("failed inserting products: %w", err)
 		}
 	}
+	return nil
 }

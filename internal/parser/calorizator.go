@@ -27,6 +27,10 @@ func NewCalorizator(cfg config.SourceConfig) Parser {
 	return res
 }
 
+func (c Calorizator) GetName() string {
+	return c.cfg.Name
+}
+
 func (c Calorizator) Parse() (res []models.Product, err error) {
 	var chanProduct = make(chan models.Product, c.cfg.ProductPerPage)
 	var wg sync.WaitGroup

@@ -9,6 +9,7 @@ import (
 
 type Parser interface {
 	Parse() ([]models.Product, error)
+	GetName() string
 }
 
 func NewParser(cfg config.SourceConfig) (Parser, error) {
