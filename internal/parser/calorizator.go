@@ -20,11 +20,15 @@ type Calorizator struct {
 	cfg    config.SourceConfig
 }
 
-func NewCalorizator(cfg config.SourceConfig) Parser {
+func NewCalorizator(cfg config.SourceConfig) (Parser, error) {
 	res := new(Calorizator)
-	res.client = http.Client{Timeout: time.Duration(cfg.Timeout) * time.Millisecond}
+	timeout, err := time.ParseDuration(cfg.Timeout)
+	if err != nil {
+		return nil, err
+	}
+	res.client = http.Client{Timeout: timeout}
 	res.cfg = cfg
-	return res
+	return res, nil
 }
 
 func (c Calorizator) GetName() string {
