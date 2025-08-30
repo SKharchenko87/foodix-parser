@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log/slog"
 	"os"
@@ -12,19 +11,20 @@ import (
 	"github.com/SKharchenko87/foodix-parser/internal/storage"
 )
 
-type Flags struct {
-	ConfigPath string
-}
-
 func main() {
-	// Аргументы запуска
-	flags := initFlags()
+	bootstrapLogger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+
+	// Подгружаем путь до конфига
+	ConfigPath, exists := os.LookupEnv("CONFIG_PATH")
+	if !exists {
+		bootstrapLogger.Error("CONFIG_PATH is not exists")
+		os.Exit(1)
+	}
 
 	// Конфиг
-	bootstrapLogger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	cfg, err := config.LoadConfig(flags.ConfigPath)
+	cfg, err := config.LoadConfig(ConfigPath)
 	if err != nil {
-		bootstrapLogger.Error("failed to load config", "path", flags.ConfigPath, "error", err)
+		bootstrapLogger.Error("failed to load config", "path", ConfigPath, "error", err)
 		os.Exit(1)
 	}
 
@@ -53,13 +53,6 @@ func main() {
 		logger.Error("failed to run", "error", err)
 		os.Exit(1)
 	}
-}
-
-func initFlags() Flags {
-	flags := Flags{}
-	flag.StringVar(&flags.ConfigPath, "config", "configs/config.yaml", "Path to config file")
-	flag.Parse()
-	return flags
 }
 
 func initLogger(cfg config.Config) *slog.Logger {
