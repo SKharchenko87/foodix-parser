@@ -1,39 +1,99 @@
 package storage
 
 import (
-	"database/sql"
+	"context"
+	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/SKharchenko87/foodix-parser/internal/config"
 	"github.com/SKharchenko87/foodix-parser/internal/models"
-	_ "github.com/lib/pq" // postgres driver
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Postgres struct {
-	db  *sql.DB
-	cfg config.DB
+	pool     *pgxpool.Pool
+	cfg      config.DB
+	user     string
+	password string
+	db       string
+	host     string
+	port     int
 }
 
 func NewPostgres(cfg config.DB) (DB, error) {
-	os.Unsetenv("PGLOCALEDIR")
-	db, err := sql.Open("postgres", cfg.DSN)
+	res := new(Postgres)
+	res.cfg = cfg
+	err := res.readPostgresEnv()
 	if err != nil {
 		return nil, err
 	}
-	res := new(Postgres)
-	res.db = db
-	res.cfg = cfg
+
+	pool, err := pgxpool.New(context.Background(), res.generateConnectionString())
+	if err != nil {
+		return nil, err
+	}
+
+	err = pool.Ping(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	res.pool = pool
+
 	return res, nil
 }
 
+func (p *Postgres) readPostgresEnv() error {
+	var err error
+	user, exists := os.LookupEnv("POSTGRES_USER")
+	if !exists {
+		err = errors.Join(err, errors.New("POSTGRES_USER not found"))
+	}
+	password, exists := os.LookupEnv("POSTGRES_PASSWORD")
+	if !exists {
+		err = errors.Join(err, errors.New("POSTGRES_PASSWORD not found"))
+	}
+	db, exists := os.LookupEnv("POSTGRES_DB")
+	if !exists {
+		err = errors.Join(err, errors.New("POSTGRES_DB not found"))
+	}
+	host, exists := os.LookupEnv("POSTGRES_HOST")
+	if !exists {
+		err = errors.Join(err, errors.New("POSTGRES_HOST not found"))
+	}
+	portStr, exists := os.LookupEnv("POSTGRES_PORT")
+	if !exists {
+		err = errors.Join(err, errors.New("POSTGRES_PORT not found"))
+	}
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		err = errors.Join(err, errors.New("POSTGRES_PORT must be an integer"))
+	}
+
+	p.user = user
+	p.password = password
+	p.host = host
+	p.port = port
+	p.db = db
+
+	return err
+}
+
+func (p Postgres) generateConnectionString() string {
+	return fmt.Sprintf("%s://%s:%s@%s:%d/%s", p.cfg.Name, p.user, p.password, p.host, p.port, p.db)
+}
+
 func (p *Postgres) Close() error {
-	return p.db.Close()
+	p.pool.Close()
+	return nil
 }
 
 func (p *Postgres) InsertProduct(product models.Product) (err error) {
-	_, err = p.db.Exec(
+	_, err = p.pool.Exec(context.Background(),
 		"INSERT INTO product(name, protein, fat, carbohydrate, kcal) VALUES($1, $2, $3, $4, $5)",
 		product.Name, product.Protein, product.Fat, product.Carbohydrate, product.Kcal,
 	)
@@ -49,15 +109,16 @@ func (p *Postgres) InsertProducts(products []models.Product) (err error) {
 	numBatches := (numProducts + p.cfg.BatchSize - 1) / p.cfg.BatchSize
 	args := make([]any, 0, 5*p.cfg.BatchSize)
 
-	tx, err := p.db.Begin()
+	ctx := context.Background()
+	tx, err := p.pool.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("could not begin transaction: %w", err)
 	}
-	defer func(tx *sql.Tx) {
-		_ = tx.Rollback() // rollback после commit безопасен
+	defer func(tx pgx.Tx) {
+		_ = tx.Rollback(ctx) // rollback после commit безопасен
 	}(tx)
 
-	_, err = tx.Exec("TRUNCATE TABLE public.product")
+	_, err = tx.Exec(ctx, "TRUNCATE TABLE public.product")
 	if err != nil {
 		return fmt.Errorf("truncate products: %w", err)
 	}
@@ -72,13 +133,13 @@ func (p *Postgres) InsertProducts(products []models.Product) (err error) {
 			index++
 		}
 
-		_, err = tx.Exec(query, args...)
+		_, err = tx.Exec(ctx, query, args...)
 		if err != nil {
 			return fmt.Errorf("batch insert products: %w", err)
 		}
 	}
 
-	return tx.Commit()
+	return tx.Commit(ctx)
 }
 
 func newInsertProductQuery(batchSize int) string {

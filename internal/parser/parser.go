@@ -14,7 +14,7 @@ type Parser interface {
 
 func NewParser(cfg config.SourceConfig) (Parser, error) {
 	if cfg.Name == "calorizator" {
-		return NewCalorizator(cfg), nil
+		return NewCalorizator(cfg)
 	}
 	return nil, errors.New("no parser found")
 }

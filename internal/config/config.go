@@ -10,7 +10,7 @@ import (
 type SourceConfig struct {
 	Name           string `yaml:"name"`
 	URL            string `yaml:"url"`
-	Timeout        int    `yaml:"timeout"`
+	Timeout        string `yaml:"timeout"`
 	ProductPerPage int    `yaml:"product_per_page"`
 	RequestDelay   int    `yaml:"request_delay"`
 }
@@ -23,7 +23,6 @@ type Config struct {
 
 type DB struct {
 	Name      string `yaml:"name"`
-	DSN       string `yaml:"dsn"`
 	BatchSize int    `yaml:"batch_size"`
 }
 
